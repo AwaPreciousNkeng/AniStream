@@ -50,6 +50,9 @@ server:
     enabled: true
     mime-types: application/json, text/html
 application:
+  file:
+    upload:
+      media-output-path: ./uploads
   jwt:
     secret: 8wWYjFpCy6Otp48mdnWDgkTjt5IjPPJqAKpqKhzAEZM=
     expiration: 86400000 #24 hours
