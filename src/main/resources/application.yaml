@@ -1,3 +1,84 @@
 spring:
   application:
     name: AniStream
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aniStream_db
+    username: pcodes
+    password: pcodes
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+  websocket:
+    allowed-origins: http://localhost:3000
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10GB
+      max-request-size: 10GB
+
+  web:
+    error:
+      include-message: never
+      include-stacktrace: never
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json, text/html
+application:
+  jwt:
+    secret: 8wWYjFpCy6Otp48mdnWDgkTjt5IjPPJqAKpqKhzAEZM=
+    expiration: 86400000 #24 hours
+    refresh-token:
+      expiration: 604800000 #7 days
+  blackbaze:
+    endpoint:
+    access-key:
+    secret-key:
+    bucket:
+      raw:
+  ffmpeg:
+    binary-path: /usr/bin/ffmpeg
+    output-dir: /tmp/animeStream/transcoded
+  ytdlp:
+    binary-path: /usr/bin/yt-dlp
+    download-dir: /tmp/animeStream/downloads
+  cache:
+    ttl:
+      home-feed: 600 #10 minutes
+      recommendations: 1800 #30 minutes
+      ranking-daily: 3600 #1 hour
+      ranking-weekly: 21600 #6 hours
+      ranking-monthly: 86400 #24 hours
+      user-search: 300 #5 minutes
+      presence: 300 #5 minutes
+  logging:
+    level:
+      root: INFO
+      com.codewithpcodes: DEBUG
+      org.springframework.security: INFO
+      org.hibernate: INFO
