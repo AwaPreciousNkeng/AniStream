@@ -53,6 +53,19 @@ public class User extends BaseAuditingEntity implements UserDetails {
 
     @Builder.Default
     @Column(nullable = false)
+    private boolean accountLocked = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int failedLoginAttempts = 0;
+
+    private LocalDateTime lockedUntil;
+
+    private String resetPasswordCode;
+    private LocalDateTime resetPasswordCodeExpiry;
+
+    @Builder.Default
+    @Column(nullable = false)
     private Language language = Language.ENGLISH;
 
     @Enumerated(EnumType.STRING)
@@ -90,5 +103,9 @@ public class User extends BaseAuditingEntity implements UserDetails {
     @Override
     public @NonNull String getUsername() {
         return email;
+    }
+
+    public String getFullName() {
+        return firstName + " " + lastName;
     }
 }
