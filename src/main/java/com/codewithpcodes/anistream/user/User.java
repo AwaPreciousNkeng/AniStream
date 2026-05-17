@@ -51,6 +51,14 @@ public class User extends BaseAuditingEntity implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.OFFLINE;
+
+    @Enumerated(EnumType.STRING)
+    private UserType type;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean accountLocked = false;

@@ -37,17 +37,17 @@ public class MessageService {
         message.setState(MessageState.SENT);
 
         messageRepository.save(message);
-        Notification notification = Notification.builder()
-                .chatId(request.chatId())
-                .messageType(request.type())
-                .content(request.content())
-                .senderId(request.senderId())
-                .receiverId(request.receiverId())
-                .notificationType(NotificationType.MESSAGE)
-                .chatName(chat.getChatName(message.getSenderId()))
-                .build();
-
-        notificationService.sendNotification(message.getReceiverId(), notification);
+//        Notification notification = Notification.builder()
+//                .chatId(request.chatId())
+//                .messageType(request.type())
+//                .content(request.content())
+//                .senderId(request.senderId())
+//                .receiverId(request.receiverId())
+//                .notificationType(NotificationType.MESSAGE)
+//                .chatName(chat.getChatName(message.getSenderId()))
+//                .build();
+//
+//        notificationService.sendNotification(message.getReceiverId(), notification);
     }
 
     public List<MessageResponse> findChatMessages(UUID chatId) {
@@ -63,13 +63,13 @@ public class MessageService {
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found with ID::" + chatId));
         final UUID recipientId = getRecipientId(chat, currentUser);
         messageRepository.setMessagesToSeenByChatId(chatId, MessageState.SEEN);
-        Notification notification = Notification.builder()
-                .chatId(chat.getId())
-                .notificationType(NotificationType.SEEN)
-                .senderId(getSenderId(chat, currentUser))
-                .receiverId(recipientId)
-                .build();
-        notificationService.sendNotification(recipientId, notification);
+//        Notification notification = Notification.builder()
+//                .chatId(chat.getId())
+//                .notificationType(NotificationType.SEEN)
+//                .senderId(getSenderId(chat, currentUser))
+//                .receiverId(recipientId)
+//                .build();
+//        notificationService.sendNotification(recipientId, notification);
     }
 
     public void uploadMediaMessage(UUID chatId, MultipartFile file, User currentUser) throws IOException {
@@ -89,16 +89,16 @@ public class MessageService {
         message.setMediaFilePath(filePath);
         messageRepository.save(message);
 
-        Notification notification = Notification.builder()
-                .chatId(chat.getId())
-                .notificationType(NotificationType.IMAGE)
-                .messageType(MessageType.IMAGE)
-                .senderId(senderId)
-                .receiverId(recipientId)
-                .media(FileUtils.readFileFromLocation(filePath))
-                .build();
-
-        notificationService.sendNotification(recipientId, notification);
+//        Notification notification = Notification.builder()
+//                .chatId(chat.getId())
+//                .notificationType(NotificationType.IMAGE)
+//                .messageType(MessageType.IMAGE)
+//                .senderId(senderId)
+//                .receiverId(recipientId)
+//                .media(FileUtils.readFileFromLocation(filePath))
+//                .build();
+//
+//        notificationService.sendNotification(recipientId, notification);
     }
 
     private UUID getSenderId(Chat chat, User currentUser) {
