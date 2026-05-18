@@ -58,12 +58,16 @@ application:
     expiration: 86400000 #24 hours
     refresh-token:
       expiration: 604800000 #7 days
-  blackbaze:
-    endpoint:
-    access-key:
-    secret-key:
+  backblaze:
+    endpoint: s3.us-east-005.backblazeb2.com
+    access-key: 005c423a1e88d1c0000000001
+    secret-key: K005DEOt5Z6ta/Y+wrpzDnf89LbYm/0
     bucket:
-      raw:
+      raw: animestream-raw
+      segments: animestream-segments
+      thumbnails: animestream-thumbnails
+      playlists: animestream-playlists
+      avatars: animestream-avatars
   ffmpeg:
     binary-path: /usr/bin/ffmpeg
     output-dir: /tmp/animeStream/transcoded

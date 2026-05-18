@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface TranscodeJobRepository extends JpaRepository<TranscodeJob, UUID> {
 
     // Batch scheduler picks up next pending job
-    Optional<TranscodeJob> findFirstByStatusOrderByCreatedAtDesc(TranscodeStatus status);
+    Optional<TranscodeJob> findFirstByStatusOrderByCreatedAtAsc(TranscodeStatus status);
 
     //All jobs for media item
     List<TranscodeJob> findByMediaIdOrderByCreatedAtDesc(UUID mediaId);
