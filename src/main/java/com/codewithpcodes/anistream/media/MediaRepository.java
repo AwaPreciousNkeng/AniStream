@@ -7,11 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface MediaRepository extends JpaRepository<MediaContent, UUID> {
-
-    Page<MediaContent> findByGenreOrderByCreatedAtDesc(String genre, Pageable pageable);
 
     Page<MediaContent> findByTypeOrderByCreatedAtDesc(MediaType type, Pageable pageable);
 
@@ -26,7 +25,8 @@ public interface MediaRepository extends JpaRepository<MediaContent, UUID> {
             @Param("query") String query
     );
 
-    @Query(value = "select distinct m.genre from MediaContent m " +
-            "where m.genre is not null ")
-    List<String> findAllGenres();
+    Optional<MediaContent> findByAnilistId(Integer anilistId);
+
+    List<MediaContent> findByAiringStatus(AiringStatus airingStatus);
+
 }

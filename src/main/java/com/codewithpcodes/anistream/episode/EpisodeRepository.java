@@ -36,4 +36,7 @@ public interface EpisodeRepository extends JpaRepository<Episode, UUID> {
     Optional<Episode> findLatestEpisode(
             @Param("seriesId") UUID seriesId
     );
+
+    long countBySeriesId(UUID id);
+
 }

@@ -29,6 +29,9 @@ public class MediaContent {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "title_english")
+    private String titleEnglish;
+
     @Column(name = "title_japanese")
     private String titleJapanese;
 
