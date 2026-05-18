@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -92,6 +93,14 @@ public class User extends BaseAuditingEntity implements UserDetails {
     private List<Chat> chatsAsSender;
     @OneToMany(mappedBy = "recipient")
     private List<Chat> chatsAsRecipient;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_friends",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "friend_id")
+    )
+    private List<User> friends = new ArrayList<>();
 
     @Transient
     public boolean isUserOnline() {

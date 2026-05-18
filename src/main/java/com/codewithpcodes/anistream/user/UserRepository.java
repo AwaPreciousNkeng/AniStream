@@ -25,10 +25,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     @Query(value = "select u from User u " +
-            "join Friendship f on (f.requester = u or f.addressee = u) " +
-            "where f.status = 'ACCEPTED' " +
-            "and (f.requester.id = :userId or f.addressee.id = :userId) " +
-            "and u.id != :userId " +
-            "and u.status = 'ONLINE'")
-    List<User> findOnlineFriends(@Param("userId") UUID userId);
+            "where u.username like %:query% " +
+            "and u.type = 'REGISTERED' " +
+            "and u.id != :currentUserId")
+    List<User> searchByUsername(
+            @Param("query") String query,
+            @Param("currentUserId") UUID currentUserId
+    );
 }

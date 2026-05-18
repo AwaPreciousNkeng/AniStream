@@ -1,5 +1,6 @@
 package com.codewithpcodes.anistream.transcode;
 
+import com.codewithpcodes.anistream.episode.Episode;
 import com.codewithpcodes.anistream.media.MediaContent;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +26,14 @@ public class TranscodeJob {
     @JoinColumn(name = "media_id", nullable = false)
     private MediaContent media;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "episode_id")
+    private Episode episode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AudioTrack audioTrack;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -36,6 +45,9 @@ public class TranscodeJob {
 
     @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;
+
+    @Column(name = "raw_file_path", length = 512)
+    private String rawFilePath;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

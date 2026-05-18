@@ -8,6 +8,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,8 +26,11 @@ public class MediaContent {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String title;
+
+    @Column(name = "title_japanese")
+    private String titleJapanese;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -34,14 +39,46 @@ public class MediaContent {
     @Column(nullable = false)
     private MediaType type;
 
-    @Column(length = 50)
-    private String genre;
+    @ElementCollection
+    @CollectionTable(
+            name = "media_genres",
+            joinColumns = @JoinColumn(name = "media_id")
+    )
+    @Column(name = "genre")
+    @Builder.Default
+    private List<String> genres = new ArrayList<>();
 
-    private String masterPlaylistUrl;
-
+    @Column(name = "thumbnail_url", length = 512)
     private String thumbnailUrl;
 
-    private String rawFilePath;
+    @Column(name = "banner_url", length = 512)
+    private String bannerUrl;
+
+    @Column(name = "master_playlist_url_sub", length = 512)
+    private String masterPlaylistUrlSub;
+
+    @Column(name = "master_playlist_url_dub", length = 512)
+    private String masterPlaylistUrlDub;
+
+    @Column(name = "anilist_id")
+    private Integer anilistId;
+
+    @Column(name = "mal_id")
+    private Integer malId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "airing_status")
+    private AiringStatus airingStatus;
+
+    private Integer totalEpisodes;
+
+    @Column(name = "season", length = 50)
+    private String season;
+
+    @Column(name = "season_year")
+    private Integer seasonYear;
+
+    private String studio;
 
     private LocalDate releaseDate;
 
@@ -52,6 +89,14 @@ public class MediaContent {
     @Column(name = "total_ratings")
     @Builder.Default
     private Integer totalRatings = 0;
+
+    @Column(name = "has_sub", nullable = false)
+    @Builder.Default
+    private Boolean hasSub = true;
+
+    @Column(name = "has_dub", nullable = false)
+    @Builder.Default
+    private Boolean hasDub = false;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata_payload", columnDefinition = "jsonb")

@@ -31,14 +31,34 @@ public class Episode {
     @Column(name = "episode_number", nullable = false)
     private Integer episodeNumber;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String title;
 
-    @Column(name = "master_playlist_url", length = 512)
-    private String masterPlaylistUrl;
+    @Column(name = "title_japanese", nullable = false)
+    private String titleJapanese;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "master_playlist_url_sub", length = 512)
+    private String masterPlaylistUrlSub;
+
+    @Column(name = "master_playlist_url_dub", length = 512)
+    private String masterPlaylistUrlDub;
+
+    @Column(name = "thumbnail_url", length = 512)
+    private String thumbnailUrl;
 
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
+
+    @Column(name = "sub_available")
+    @Builder.Default
+    private Boolean subAvailable = false;
+
+    @Column(name = "dub_available")
+    @Builder.Default
+    private Boolean dubAvailable = false;
 
     @Column(name = "release_date")
     private LocalDate releaseDate;
