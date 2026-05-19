@@ -45,6 +45,29 @@ public class WatchRoom {
     @Builder.Default
     private WatchRoomStatus status = WatchRoomStatus.WAITING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audio_track",  nullable = false)
+    @Builder.Default
+    private WatchRoomAudioTrack audioTrack = WatchRoomAudioTrack.SUB;
+
+    @Column(name = "current_episode_id")
+    private UUID currentEpisodeId;
+
+    @Column(name = "current_timestamp")
+    @Builder.Default
+    private Double currentTimestamp = 0.0;
+
+    @Column(name = "is_playing", nullable = false)
+    @Builder.Default
+    private Boolean isPlaying = false;
+
+    @Column(name = "max_participants")
+    private Integer maxParticipants;
+
+    @Column(name = "allow_participant_control", nullable = false)
+    @Builder.Default
+    private Boolean allowParticipantControl = false;
+
     @OneToMany(mappedBy = "watchRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<WatchRoomParticipant> participants = new ArrayList<>();
@@ -52,4 +75,7 @@ public class WatchRoom {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "ended_at")
+    private LocalDateTime endedAt;
 }

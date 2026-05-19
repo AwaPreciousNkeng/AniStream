@@ -1,10 +1,12 @@
 package com.codewithpcodes.anistream.notification;
 
+import com.codewithpcodes.anistream.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -21,5 +23,9 @@ public class NotificationService {
                 "/chat",
                 notification
         );
+    }
+
+    public void send(User friend, User host, NotificationType notificationType, Map<String, String> watchRoomId) {
+
     }
 }

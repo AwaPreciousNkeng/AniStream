@@ -27,7 +27,23 @@ public class WatchRoomParticipant {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private WatchRoomRole role = WatchRoomRole.VIEWER;
+
+    @Column(name = "is_connected", nullable = false)
+    @Builder.Default
+    private Boolean isConnected = true;
+
+    @Column(name = "last_known_timestamp")
+    @Builder.Default
+    private Double lastKnownTimestamp = 0.0;
+
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)
     private LocalDateTime joinedAt;
+
+    @Column(name = "left_at")
+    private LocalDateTime leftAt;
 }

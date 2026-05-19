@@ -9,6 +9,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.net.URI;
@@ -44,7 +45,7 @@ public class StorageService {
             @Value("${application.backblaze.access-key}") String accessKey,
             @Value("${application.backblaze.secret-key}") String secretKey
     ) {
-        this.s3Client = s3Client.builder()
+        this.s3Client = S3Client.builder()
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)
@@ -60,7 +61,7 @@ public class StorageService {
             try (Stream<Path> files = Files.walk(folder)) {
                 files.filter(Files::isRegularFile)
                         .forEach(file -> {
-                            String key = s3Prefix + "/" + folder.relativize(file).toString();
+                            String key = s3Prefix + "/" + folder.relativize(file);
                             uploadFile(
                                     file,
                                     key.endsWith(".m3u8")
@@ -126,5 +127,9 @@ public class StorageService {
         if (fileName.endsWith(".jpg")) return "image/jpeg";
         if (fileName.endsWith(".png")) return "image/png";
         return "application/octet-stream";
+    }
+
+    public ListBucketsResponse listBuckets() {
+        return s3Client.listBuckets();
     }
 }

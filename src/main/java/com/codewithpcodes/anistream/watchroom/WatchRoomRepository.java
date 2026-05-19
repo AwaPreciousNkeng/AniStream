@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface WatchRoomRepository extends JpaRepository<WatchRoom, UUID> {
 
     //Join by invite code
-    Optional<WatchRoom> findByInactiveCode(String inactiveCode);
+    Optional<WatchRoom> findByInviteCode(String inviteCode);
 
     //All active watch rooms for a user
     @Query(value = "select w from WatchRoom w " +
@@ -26,5 +26,5 @@ public interface WatchRoomRepository extends JpaRepository<WatchRoom, UUID> {
     List<WatchRoom> findByHostIdOrderByCreatedAtDesc(UUID hostId);
 
     //check if invite code exists
-    boolean existsByInactiveCode(String inactiveCode);
+    boolean existsByInviteCode(String inviteCode);
 }

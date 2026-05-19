@@ -28,6 +28,7 @@ import java.util.UUID;
         query = "SELECT DISTINCT c FROM Chat c WHERE (c.sender.id = :senderId AND c.recipient.id = :recipientId) OR (c.sender.id = :recipientId AND c.recipient.id = :senderId) ORDER BY createdDate DESC"
 )
 public class Chat extends BaseAuditingEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -35,9 +36,11 @@ public class Chat extends BaseAuditingEntity {
     @ManyToOne
     @JoinColumn(name = "sender_id")
     private User sender;
+
     @ManyToOne
     @JoinColumn(name = "recipient_id")
     private User recipient;
+
     @OneToMany(mappedBy = "chat", fetch = FetchType.EAGER)
     @OrderBy("createdDate DESC ")
     private List<Message> messages;
