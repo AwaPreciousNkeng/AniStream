@@ -13,5 +13,17 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     List<Chat> findChatsBySenderId(@Param("senderId") UUID userId);
 
     @Query(name = ChatConstants.FIND_CHAT_BY_SENDER_ID_AND_RECEIVER)
-    Optional<Chat> findChatByReceiverAndSender(@Param("senderId") UUID senderId, @Param("recipientId") UUID receiverId);
+    Optional<Chat> findChatByReceiverAndSender(
+            @Param("senderId") UUID senderId,
+            @Param("recipientId") UUID receiverId
+    );
+
+    //check if a user is a member of a chat
+    @Query(value = "select count(m) > 0 from ChatMember m " +
+            "where m.chat.id = :chatId " +
+            "and m.user.id = :userId")
+    boolean isUserMember(
+            @Param("chatId") UUID chatId,
+            @Param("userId") UUID userId
+    );
 }

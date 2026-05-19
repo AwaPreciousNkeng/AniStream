@@ -10,6 +10,8 @@ import com.codewithpcodes.anistream.notification.NotificationType;
 import com.codewithpcodes.anistream.user.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,11 +52,11 @@ public class MessageService {
 //        notificationService.sendNotification(message.getReceiverId(), notification);
     }
 
-    public List<MessageResponse> findChatMessages(UUID chatId) {
-        return messageRepository.findMessagesByChatId(chatId)
+    public Page<MessageResponse> findChatMessages(UUID chatId, Pageable pageable) {
+        return messageRepository.findMessagesByChatId(chatId, pageable)
                 .stream()
                 .map(MessageResponse::fromMessage)
-                .toList();
+
     }
 
     @Transactional

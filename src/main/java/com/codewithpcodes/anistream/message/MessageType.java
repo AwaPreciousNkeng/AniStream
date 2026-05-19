@@ -5,4 +5,6 @@ public enum MessageType {
     IMAGE,
     AUDIO,
     VIDEO,
+    WATCH_ROOM_INVITE,
+    LINK
 }

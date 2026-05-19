@@ -6,15 +6,15 @@ import com.codewithpcodes.anistream.message.MessageState;
 import com.codewithpcodes.anistream.message.MessageType;
 import com.codewithpcodes.anistream.user.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
 @AllArgsConstructor
@@ -27,7 +27,7 @@ import java.util.UUID;
 @NamedQuery(name = ChatConstants.FIND_CHAT_BY_SENDER_ID_AND_RECEIVER,
         query = "SELECT DISTINCT c FROM Chat c WHERE (c.sender.id = :senderId AND c.recipient.id = :recipientId) OR (c.sender.id = :recipientId AND c.recipient.id = :senderId) ORDER BY createdDate DESC"
 )
-public class Chat extends BaseAuditingEntity {
+public class Chat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -44,6 +44,26 @@ public class Chat extends BaseAuditingEntity {
     @OneToMany(mappedBy = "chat", fetch = FetchType.EAGER)
     @OrderBy("createdDate DESC ")
     private List<Message> messages;
+
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "chat_type", nullable = false)
+    private ChatType type;
+
+
+    @OneToMany(
+            mappedBy = "chat",
+            fetch = FetchType.LAZY,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<ChatMember> members = new ArrayList<>();
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @Transient
     public String getChatName(final UUID senderId) {
@@ -65,10 +85,10 @@ public class Chat extends BaseAuditingEntity {
     @Transient
     public String getLastMessage() {
         if (messages != null && !messages.isEmpty()) {
-            if (messages.get(0).getType() != MessageType.TEXT) {
+            if (messages.getFirst().getType() != MessageType.TEXT) {
                 return "Attachment";
             }
-            return messages.get(0).getContent();
+            return messages.getFirst().getContent();
         }
         return null;
     }
@@ -76,7 +96,7 @@ public class Chat extends BaseAuditingEntity {
     @Transient
     public LocalDateTime getLastMessageTime() {
         if (messages != null && !messages.isEmpty()) {
-            return messages.get(0).getCreatedDate();
+            return messages.getFirst().getCreatedDate();
         }
         return null;
     }
