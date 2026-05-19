@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -37,7 +38,7 @@ public class WatchRoomSyncController {
                     user.getId().toString(),
                     "/queue/errors",
                     new SyncError(
-                            "NOT_PERMISSION",
+                            "NO_PERMISSION",
                             "You do not have permission to control playback"
                     )
             );
@@ -62,7 +63,8 @@ public class WatchRoomSyncController {
     @MessageMapping("/watch-room/{watch-room-id}/sync-request")
     public void handleSyncRequest(
             @DestinationVariable String watchRoomId,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal User user,
+            SimpMessageHeaderAccessor headerAccessor
     ) {
         UUID watchRoomID = UUID.fromString(watchRoomId);
 
@@ -79,6 +81,11 @@ public class WatchRoomSyncController {
                     )
             );
             return;
+        }
+
+        // Save room metadata to session attributes for clean disconnect handling later
+        if (headerAccessor.getSessionAttributes() != null) {
+            headerAccessor.getSessionAttributes().put("watchRoomId", watchRoomID);
         }
 
         WatchRoomState state = watchRoomService.getWatchRoomState(watchRoomID);
@@ -137,7 +144,7 @@ public class WatchRoomSyncController {
     }
 
     @MessageMapping("/watch-room/{watch-room-id}/role-change")
-    private void handleRoleChange(
+    public void handleRoleChange(
             @DestinationVariable String watchRoomId,
             @Payload RoleChangeFrame frame,
             @AuthenticationPrincipal User user
