@@ -33,6 +33,9 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @ManyToOne
     @JoinColumn(name = "sender_id")
     private User sender;

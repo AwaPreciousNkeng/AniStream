@@ -22,8 +22,6 @@ public interface WatchRoomRepository extends JpaRepository<WatchRoom, UUID> {
             @Param("userId") UUID userId
     );
 
-    //All watch rooms hosted by a user
-    List<WatchRoom> findByHostIdOrderByCreatedAtDesc(UUID hostId);
 
     //check if invite code exists
     boolean existsByInviteCode(String inviteCode);
