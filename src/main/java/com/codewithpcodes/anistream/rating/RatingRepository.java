@@ -12,11 +12,9 @@ import java.util.UUID;
 public interface RatingRepository extends JpaRepository<Rating, UUID> {
     Page<Rating> findByMediaIdOrderByCreatedAtDesc(UUID mediaId, Pageable pageable);
 
-    Page<Rating> findByEpisodeIdOrderByCreatedAtDesc(UUID episodeId, Pageable pageable);
-
     Optional<Rating> findByUserIdAndMediaId(UUID userId, UUID mediaId);
 
-    @Query(" select avg(r.stars) from Rating r " +
+    @Query(" select avg(r.score) from Rating r " +
             "where r.media.id = :mediaId")
     Double computedAvgRating(
             @Param("mediaId") UUID mediaId

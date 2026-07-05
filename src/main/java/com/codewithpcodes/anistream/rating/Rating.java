@@ -41,7 +41,7 @@ public class Rating {
     private Episode episode;
 
     @Column(nullable = false)
-    private Integer stars;
+    private int score;
 
     @Column(columnDefinition = "TEXT")
     private String review;
