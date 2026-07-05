@@ -1,6 +1,9 @@
 package com.codewithpcodes.anistream.watchroom;
 
 import com.codewithpcodes.anistream.chat.*;
+import com.codewithpcodes.anistream.exceptions.BadRequestException;
+import com.codewithpcodes.anistream.exceptions.ForbiddenException;
+import com.codewithpcodes.anistream.exceptions.ResourceNotFoundException;
 import com.codewithpcodes.anistream.media.MediaContent;
 import com.codewithpcodes.anistream.media.MediaRepository;
 import com.codewithpcodes.anistream.notification.NotificationService;
@@ -49,14 +52,14 @@ public class WatchRoomService {
     ) {
 
         MediaContent media = mediaRepository.findById(request.getMediaId())
-                .orElseThrow(() -> new IllegalArgumentException("Media not found with ID: " + request.getMediaId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Media not found"));
 
         // Generate unique invite code
         String inviteCode = generateUniqueInviteCode();
         Chat chat = Chat.builder()
                 .type(ChatType.GROUP)
                 .name(media.getTitle() + "- Watch Room")
-                .sender(host)
+                .createdBy(host)
                 .build();
         chatRepository.save(chat);
 
@@ -85,7 +88,6 @@ public class WatchRoomService {
                 .build();
         watchRoomRepository.save(watchRoom);
 
-        //Add host as HOST participant
         watchRoomParticipantRepository.save(
                 WatchRoomParticipant.builder()
                         .watchRoom(watchRoom)
@@ -96,7 +98,6 @@ public class WatchRoomService {
                         .build()
         );
 
-        //Update host presence status
         host.setStatus(UserStatus.IN_WATCH_ROOM);
         userRepository.save(host);
 
@@ -115,11 +116,10 @@ public class WatchRoomService {
 
          WatchRoom watchRoom = watchRoomRepository
                  .findByInviteCode(inviteCode)
-                 .orElseThrow(() -> new IllegalArgumentException("WatchRoom not found with Invite Code: " + inviteCode));
+                 .orElseThrow(() -> new ResourceNotFoundException("WatchRoom not found"));
 
-         // Validate joinability
         if (watchRoom.getStatus() == WatchRoomStatus.ENDED) {
-            throw new IllegalStateException("WatchRoom is already ended");
+            throw new BadRequestException("WatchRoom is already ended");
         }
 
         // Check max participants
@@ -127,14 +127,14 @@ public class WatchRoomService {
             long count = watchRoomParticipantRepository
                     .countByWatchRoomId(watchRoom.getId());
             if (count >= watchRoom.getMaxParticipants()) {
-                throw new IllegalStateException("Watch room is full");
+                throw new BadRequestException("Watch room is full");
             }
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // check is already joined
+        // check if already joined
         boolean alreadyJoined = watchRoomParticipantRepository
                 .existsByWatchRoomIdAndUserId(watchRoom.getId(), userId);
 
@@ -195,7 +195,7 @@ public class WatchRoomService {
                 .existsByWatchRoomIdAndUserId(watchRoomId, requester.getId());
 
         if (!isParticipant) {
-            throw new IllegalArgumentException("Forbidden - only participant can view watch room participants");
+            throw new ForbiddenException("Forbidden - only participants can view watch room participants");
         }
 
         return watchRoomParticipantRepository.findByWatchRoomId(watchRoomId)
@@ -208,7 +208,7 @@ public class WatchRoomService {
     public void leaveWatchRoom(UUID watchRoomId, User user) {
 
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         watchRoomParticipantRepository
                 .findByWatchRoomId(watchRoomId)
@@ -251,7 +251,7 @@ public class WatchRoomService {
     public void endWatchRoom(UUID watchRoomId, UUID requesterId) {
 
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         // Only host can end the room
         boolean isHost = watchRoom.getHost().getId().equals(requesterId);
@@ -261,7 +261,7 @@ public class WatchRoomService {
                 .stream().noneMatch(WatchRoomParticipant::getIsConnected);
 
         if (!isHost && !isAutoEnd) {
-            throw new IllegalArgumentException("Only the host can end the room");
+            throw new ForbiddenException("Only the host can end the room");
         }
 
         //Updated all participants to ONLINE
@@ -290,10 +290,10 @@ public class WatchRoomService {
     public void assignCoHost(UUID watchRoomId, UUID hostId, UUID targetUserId) {
 
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         if (!watchRoom.getHost().getId().equals(hostId)) {
-            throw new IllegalArgumentException("Only the host can assign co-hosts");
+            throw new ForbiddenException("Only the host can assign co-hosts");
         }
 
         watchRoomParticipantRepository
@@ -311,10 +311,10 @@ public class WatchRoomService {
     @Transactional
     public void toggleParticipantControl(UUID watchRoomId, UUID hostId) {
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         if (!watchRoom.getHost().getId().equals(hostId)) {
-            throw new IllegalArgumentException("Only the host can toggle participant control");
+            throw new ForbiddenException("Only the host can toggle participant control");
         }
         watchRoom.setAllowParticipantControl(!watchRoom.getAllowParticipantControl());
 
@@ -328,14 +328,14 @@ public class WatchRoomService {
     public WatchRoomResponse getWatchRoom(UUID watchRoomId, User requester) {
 
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         //Verify if the requester is a participant
         boolean isParticipant = watchRoomParticipantRepository
                 .existsByWatchRoomIdAndUserId(watchRoomId, requester.getId());
 
         if (!isParticipant) {
-            throw new IllegalArgumentException("Forbidden - only participant can view watch room details");
+            throw new ForbiddenException("Forbidden - only participant can view watch room details");
         }
 
         return WatchRoomResponse.toWatchResponse(watchRoom);
@@ -384,7 +384,7 @@ public class WatchRoomService {
         // Fallback to DB is redis miss
         if (state == null) {
             WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                    .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
             state = buildState(watchRoom, watchRoom.getCurrentEpisodeId());
             cacheWatchRoomState(watchRoomId, state);
         }
@@ -395,7 +395,7 @@ public class WatchRoomService {
     public void inviteFriends(UUID watchRoomId, User host, List<UUID> friendIds) {
 
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         // Send notification to each friend
         friendIds.forEach(friendId -> userRepository.findById(friendId).ifPresent(friend -> notificationService.send(
@@ -424,7 +424,7 @@ public class WatchRoomService {
 
     public boolean canControl(UUID watchRoomId, UUID userId) {
         WatchRoom watchRoom = watchRoomRepository.findById(watchRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("Watch room not found with ID: " + watchRoomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Watch room not found"));
 
         if (watchRoom.getHost().getId().equals(userId)) {
             return true;
@@ -447,7 +447,7 @@ public class WatchRoomService {
     }
 
     private void cacheParticipant(UUID watchRoomId, UUID userId) {
-        redisTemplate.opsForSet().add(WATCH_ROOM_PARTICIPANTS_KEY + watchRoomId + userId.toString());
+        redisTemplate.opsForSet().add(WATCH_ROOM_PARTICIPANTS_KEY + watchRoomId, userId.toString());
         redisTemplate.expire(WATCH_ROOM_PARTICIPANTS_KEY + watchRoomId, 24, TimeUnit.HOURS);
     }
 

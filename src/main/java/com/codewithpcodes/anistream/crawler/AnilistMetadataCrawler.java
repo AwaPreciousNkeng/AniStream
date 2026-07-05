@@ -38,7 +38,6 @@ public class AnilistMetadataCrawler {
             .baseUrl("https://graphql.anilist.co")
             .build();
 
-    // ─── QUERY TEMPLATE ────────────────────────────────────
     private static final String ANIME_QUERY = """
         query ($id: Int, $search: String) {
           Media(id: $id, search: $search, type: ANIME) {

@@ -1,30 +1,18 @@
 package com.codewithpcodes.anistream.message;
 
-import com.codewithpcodes.anistream.file.FileUtils;
-
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 public record MessageResponse(
         UUID id,
+        UUID chatId,
         String content,
         MessageType type,
-        MessageState state,
+        String senderAvatar,
+        String senderUsername,
+        Map<String, Object> metadata,
         UUID senderId,
-        UUID receiverId,
-        LocalDateTime createdAt,
-        byte[] media
+        LocalDateTime sentAt
 ) {
-    public static MessageResponse fromMessage(Message message) {
-        return new MessageResponse(
-                message.getId(),
-                message.getContent(),
-                message.getType(),
-                message.getState(),
-                message.getSenderId(),
-                message.getReceiverId(),
-                message.getCreatedDate(),
-                FileUtils.readFileFromLocation(message.getMediaFilePath())
-        );
-    }
 }

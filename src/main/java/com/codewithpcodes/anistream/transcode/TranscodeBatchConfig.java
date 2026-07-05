@@ -1,6 +1,6 @@
 package com.codewithpcodes.anistream.transcode;
 
-import com.codewithpcodes.anistream.exception.TranscodingException;
+import com.codewithpcodes.anistream.exceptions.TranscodingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;

@@ -11,22 +11,19 @@ import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    @Query(name = MessageConstants.FIND_MESSAGES_BY_CHAT_ID)
-    Page<Message> findMessagesByChatId(UUID chatId, Pageable pageable);
-
-    @Query(name = MessageConstants.SET_MESSAGES_TO_SEEN_BY_CHAT)
-    @Modifying
-    void setMessagesToSeenByChatId(UUID chatId, MessageState newState);
+    // Paginated message history for a chat
+    Page<Message> findByChatIdOrderBySentAtDesc(UUID chatId, Pageable pageable);
 
     //Count unread messages in a chat for a user
-    @Query(value = "select  count(m) from Message m " +
+    @Query(value = "select  count(m) " +
+            "from Message m " +
             "where m.chat.id = :chatId " +
-            "and m.senderId != :userId " +
-            "and m.createdAt > (" +
-            "select coalesce(max(m2.createdAt), '1970-01-01') " +
+            "and m.sender.id != :userId " +
+            "and m.sentAt > (" +
+            "select coalesce(max(m2.sentAt), '1970-01-01') " +
             "from Message m2 " +
             "where m2.chat.id = :chatId " +
-            "and m2.senderId = :userId)")
+            "and m2.sender.id = :userId)")
     long countUnreadMessages(
             @Param("chatId") UUID chatId,
             @Param("userId") UUID userId

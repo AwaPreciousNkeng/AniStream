@@ -9,17 +9,27 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ChatRepository extends JpaRepository<Chat, UUID> {
-    @Query(name = ChatConstants.FIND_CHAT_BY_SENDER_ID)
-    List<Chat> findChatsBySenderId(@Param("senderId") UUID userId);
 
-    @Query(name = ChatConstants.FIND_CHAT_BY_SENDER_ID_AND_RECEIVER)
-    Optional<Chat> findChatByReceiverAndSender(
-            @Param("senderId") UUID senderId,
-            @Param("recipientId") UUID receiverId
+    @Query(value = "select c from Chat c " +
+            "join c.members m " +
+            "where m.user.id = :userId " +
+            "order by c.createdAt desc")
+    List<Chat> findAllByUserId(@Param("userId") UUID userId);
+
+    @Query(value = "select c from Chat c " +
+            "join c.members m1 " +
+            "join c.members m2 " +
+            "where c.type = 'DM' " +
+            "and m1.user.id = :userId1 " +
+            "and m2.user.id = :userId2")
+    Optional<Chat> findExistingDm(
+            @Param("userId1") UUID userId1,
+            @Param("userId2") UUID userId2
     );
 
     //check if a user is a member of a chat
-    @Query(value = "select count(m) > 0 from ChatMember m " +
+    @Query(value = "select count(m) > 0 " +
+            "from ChatMember m " +
             "where m.chat.id = :chatId " +
             "and m.user.id = :userId")
     boolean isUserMember(

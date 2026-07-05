@@ -1,25 +1,16 @@
 package com.codewithpcodes.anistream.chat;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record ChatResponse(
         UUID id,
         String name,
-        long unreadCount,
+        ChatType type,
+        String avatarUrl,
+        int unreadCount,
+        int memberCount,
         String lastMessage,
-        boolean isRecipientOnline,
-        UUID senderId,
-        UUID receiverId
+        LocalDateTime lastMessageAt
 ) {
-    public static ChatResponse fromChat(Chat chat, UUID senderId) {
-        return new ChatResponse(
-                chat.getId(),
-                chat.getChatName(senderId),
-                chat.getUnreadMessagesCount(senderId),
-                chat.getLastMessage(),
-                chat.getRecipient().isUserOnline(),
-                chat.getSender().getId(),
-                chat.getRecipient().getId()
-        );
-    }
 }

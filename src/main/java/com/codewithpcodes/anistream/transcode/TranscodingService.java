@@ -3,7 +3,7 @@ package com.codewithpcodes.anistream.transcode;
 import com.codewithpcodes.anistream.crawler.VideoDownloadService;
 import com.codewithpcodes.anistream.episode.Episode;
 import com.codewithpcodes.anistream.episode.EpisodeRepository;
-import com.codewithpcodes.anistream.exception.TranscodingException;
+import com.codewithpcodes.anistream.exceptions.TranscodingException;
 import com.codewithpcodes.anistream.media.MediaContent;
 import com.codewithpcodes.anistream.media.MediaRepository;
 import com.codewithpcodes.anistream.storage.StorageService;
@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -72,11 +73,11 @@ public class TranscodingService {
             transcodeJobRepository.save(job);
             
             // Step 2 - Transcode via FFmpeg
-            String transcodedFolder = transcodeToHls(job, rawFilePath);
+            String transcodeFolder = transcodeToHls(job, rawFilePath);
 
             // Step 3 - Upload to Backblaze B2
             String s3Prefix = buildS3Prefix(job);
-            storageService.uploadTranscodedFolder(transcodedFolder, s3Prefix);
+            storageService.uploadTranscodedFolder(transcodeFolder, s3Prefix);
 
             // Step 4 - Build master playlist URL
             String masterUrl = storageService.buildPublicUrl("animestream-playlists", s3Prefix + "/master.m3u8");
@@ -85,7 +86,7 @@ public class TranscodingService {
             updatePlaylistUrl(job, masterUrl);
 
             // Step 6 - Clean up local temp files
-            cleanUpLocalFiles(rawFilePath, transcodedFolder);
+            cleanUpLocalFiles(rawFilePath, transcodeFolder);
 
             // Step 7 - Mark job as done
             job.setStatus(TranscodeStatus.DONE);
@@ -133,7 +134,7 @@ public class TranscodingService {
                 "-b:v", bitrate,
                 "-c:a", "aac",
                 "-b:a", "128k",
-                "hls_time", "4",
+                "-hls_time", "4",
                 "-hls_playlist_type", "vod",
                 "-hls_segment_filename", variantDir + "/segment_%03d.ts",
                 variantDir + "/playlist.m3u8",
@@ -234,23 +235,30 @@ public class TranscodingService {
         return prefix.toString();
     }
 
-    private void cleanUpLocalFiles(String rawFilePath, String transcodedFolder) {
+    private void cleanUpLocalFiles(String rawFilePath, String transcodeFolder) {
         try {
-            Files.deleteIfExists(Paths.get(rawFilePath));
+            Path rawPath = Paths.get(rawFilePath);
+            Files.deleteIfExists(rawPath);
+        } catch (IOException e) {
+            log.warn("Could not delete raw file {}", rawFilePath, e);
+        }
 
-            Path folder = Paths.get(transcodedFolder);
-            Files.walk(folder)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(p -> {
-                        try {
-                            Files.deleteIfExists(p);
-                        } catch (Exception e) {
-                            log.warn("Could not delete: {}", p);
-                        }
-                    });
-            log.info("Cleaned up temp files for job");
-        } catch (Exception e) {
-            log.warn("Cleanup failed: {}", e.getMessage());
+        Path folder =  Paths.get(transcodeFolder);
+
+        if (Files.exists(folder)) {
+            try (Stream<Path> pathStream = Files.walk(folder)) {
+                pathStream.sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.deleteIfExists(p);
+                            } catch (IOException e) {
+                                log.warn("Could not delete file inside transcode folder {}", p, e);
+                            }
+                        });
+                log.info("Successfully cleaned up transcode folder {}", transcodeFolder);
+            } catch (IOException e) {
+                log.warn("Failed during directory walk of {}", transcodeFolder, e);
+            }
         }
     }
 

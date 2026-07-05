@@ -1,10 +1,10 @@
 package com.codewithpcodes.anistream.user;
 
 import com.codewithpcodes.anistream.chat.Chat;
-import com.codewithpcodes.anistream.common.BaseAuditingEntity;
 import com.codewithpcodes.anistream.token.Token;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,14 +23,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "users")
-@NamedQuery(name = UserConstants.FIND_USER_BY_EMAIL,
-        query = "SELECT u FROM User u WHERE u.email = :email"
-)
-@NamedQuery(name = UserConstants.FIND_ALL_USERS_EXCEPT_SELF,
-        query = "SELECT u FROM User u WHERE u.id != :publicId")
-@NamedQuery(name = UserConstants.FIND_USER_BY_PUBLIC_ID,
-        query = "SELECT u FROM User u WHERE u.id = :publicId")
-public class User extends BaseAuditingEntity implements UserDetails {
+public class User implements UserDetails {
     private static final int LAST_ACTIVE_INTERVAL = 5;
 
     @Id
@@ -58,6 +51,7 @@ public class User extends BaseAuditingEntity implements UserDetails {
     private UserStatus status = UserStatus.OFFLINE;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "user_type")
     private UserType type;
 
     @Builder.Default
@@ -89,6 +83,10 @@ public class User extends BaseAuditingEntity implements UserDetails {
 
     private LocalDateTime lastSeen;
 
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
     @OneToMany(mappedBy = "sender")
     private List<Chat> chatsAsSender;
     @OneToMany(mappedBy = "recipient")
@@ -102,10 +100,6 @@ public class User extends BaseAuditingEntity implements UserDetails {
     )
     private List<User> friends = new ArrayList<>();
 
-    @Transient
-    public boolean isUserOnline() {
-        return lastSeen != null && lastSeen.isAfter(LocalDateTime.now().minusMinutes(LAST_ACTIVE_INTERVAL));
-    }
 
     @Override
     public @NonNull Collection<? extends GrantedAuthority> getAuthorities() {

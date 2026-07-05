@@ -1,4 +1,4 @@
-package com.codewithpcodes.anistream.exception;
+package com.codewithpcodes.anistream.exceptions;
 
 public class TranscodingException extends RuntimeException {
     public TranscodingException(String message) {

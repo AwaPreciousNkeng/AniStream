@@ -9,14 +9,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
-    @Query(name = UserConstants.FIND_USER_BY_EMAIL)
+
     Optional<User> findByEmail(String email);
-
-    @Query(name = UserConstants.FIND_USER_BY_PUBLIC_ID)
-    Optional<User> findByPublicId(UUID publicId);
-
-    @Query(name = UserConstants.FIND_ALL_USERS_EXCEPT_SELF)
-    List<User> findAllUsersExceptSelf(UUID publicId);
 
     boolean existsByEmail(String email);
 
@@ -32,4 +26,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             @Param("query") String query,
             @Param("currentUserId") UUID currentUserId
     );
+
 }

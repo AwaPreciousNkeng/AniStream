@@ -16,7 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableBatchProcessing
 public class AniStreamApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(AniStreamApplication.class, args);
     }
 

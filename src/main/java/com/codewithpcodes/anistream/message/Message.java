@@ -1,12 +1,9 @@
 package com.codewithpcodes.anistream.message;
 
 import com.codewithpcodes.anistream.chat.Chat;
-import com.codewithpcodes.anistream.common.BaseAuditingEntity;
+import com.codewithpcodes.anistream.user.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -19,15 +16,10 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "messages")
-@NamedQuery(name = MessageConstants.FIND_MESSAGES_BY_CHAT_ID,
-        query = "SELECT m FROM Message m WHERE m.chat.id = :chatId ORDER BY m.createdDate asc"
-)
-@NamedQuery(name = MessageConstants.SET_MESSAGES_TO_SEEN_BY_CHAT,
-        query = "UPDATE Message SET state = :newState WHERE chat.id = :chatId"
-)
-public class Message extends BaseAuditingEntity {
+public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -37,29 +29,22 @@ public class Message extends BaseAuditingEntity {
     private String content;
 
     @Enumerated(EnumType.STRING)
-    private MessageState state;
-
-    @Enumerated(EnumType.STRING)
     private MessageType type;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_id", nullable = false)
     private Chat chat;
 
-    @Column(name = "sender_id", nullable = false)
-    private UUID senderId;
-
-    @Column(name = "receiver_id", nullable = false)
-    private UUID receiverId;
-
-    private String mediaFilePath;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false)
+    private User sender;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> metadata;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "sent_at", updatable = false)
+    private LocalDateTime sentAt;
 
 }
