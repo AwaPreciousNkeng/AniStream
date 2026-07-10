@@ -2,6 +2,7 @@ package com.codewithpcodes.anistream.crawler;
 
 import com.codewithpcodes.anistream.episode.Episode;
 import com.codewithpcodes.anistream.episode.EpisodeRepository;
+import com.codewithpcodes.anistream.exceptions.ResourceNotFoundException;
 import com.codewithpcodes.anistream.media.MediaContent;
 import com.codewithpcodes.anistream.media.MediaType;
 import com.codewithpcodes.anistream.transcode.AudioTrack;
@@ -15,11 +16,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -135,15 +138,21 @@ public class VideoDownloadService {
             }
 
             //Find the downloaded file
-            Path downloaded = Files.list(dir)
-                    .filter(p -> p.toString().contains(
-                            episode != null
-                                    ? "ep" + episode.getEpisodeNumber()
-                                      + "_" + audioTrack.name().toLowerCase()
-                                    : audioTrack.name().toLowerCase()
-                    ))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Downloaded file not found"));
+            Path downloaded;
+            try (Stream<Path> stream = Files.list(dir)) {
+                downloaded = stream
+                        .filter(p -> p.toString().contains(
+                                episode != null
+                                        ? "ep" + episode.getEpisodeNumber()
+                                          + "_" + audioTrack.name().toLowerCase()
+                                        : audioTrack.name().toLowerCase()
+                ))
+                        .findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Downloaded file not found"));
+            } catch (IOException e) {
+                log.error("Failed to read directory listing", e);
+                throw new RuntimeException("Failed to read directory listing", e);
+            }
             log.info("Download complete: {}", downloaded);
             return downloaded.toString();
         } catch (Exception e) {

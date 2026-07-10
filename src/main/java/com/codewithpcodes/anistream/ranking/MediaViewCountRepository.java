@@ -1,6 +1,9 @@
 package com.codewithpcodes.anistream.ranking;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,5 +31,23 @@ public interface MediaViewCountRepository extends JpaRepository<MediaViewCount, 
             @Param("limit") int limit
     );
 
+    @Query("""
+    SELECT v.media, SUM(v.viewCount) as totalViews
+    FROM MediaViewCount v
+    GROUP BY v.media
+    ORDER BY totalViews DESC
+    """)
+    List<Object[]> findMostWatchedAllTime(Pageable pageable);
 
+    @Modifying
+    @Query(value = """
+    INSERT INTO media_view_counts (id, media_id, episode_id, user_id, view_count, view_date)
+    VALUES (gen_random_uuid(), :mediaId, :episodeId, :userId, 1, NOW())
+    ON CONFLICT (media_id, episode_id, user_id, DATE(view_date))
+    DO UPDATE SET view_count = media_view_counts.view_count + 1
+    """, nativeQuery = true)
+    void incrementViewCount(
+            @Param("mediaId") UUID mediaId,
+            @Param("episodeId") UUID episodeId,
+            @Param("userId") UUID userId);
 }

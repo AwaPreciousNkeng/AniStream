@@ -71,7 +71,7 @@ public class StorageService {
                             );
                         });
             }
-            log.info("Uploaded transcoded folder: {}", localFolderPath);
+            log.info("Uploaded the transcoded folder: {}", localFolderPath);
         } catch (Exception e) {
             log.error("Upload failed for folder {}: {}", localFolderPath, e.getMessage());
             throw new RuntimeException("Upload failed", e);

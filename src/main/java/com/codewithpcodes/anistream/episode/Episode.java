@@ -34,7 +34,7 @@ public class Episode {
     @Column(nullable = false)
     private String title;
 
-    @Column(name = "title_japanese", nullable = false)
+    @Column(name = "title_japanese")
     private String titleJapanese;
 
     @Column(columnDefinition = "TEXT")
