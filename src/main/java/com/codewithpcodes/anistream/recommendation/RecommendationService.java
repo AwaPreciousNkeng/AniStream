@@ -1,101 +1,88 @@
 package com.codewithpcodes.anistream.recommendation;
 
-import com.codewithpcodes.anistream.affinity.UserGenreAffinity;
 import com.codewithpcodes.anistream.affinity.UserGenreAffinityRepository;
-import com.codewithpcodes.anistream.history.WatchHistory;
 import com.codewithpcodes.anistream.history.WatchHistoryRepository;
 import com.codewithpcodes.anistream.media.MediaContent;
 import com.codewithpcodes.anistream.media.MediaRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RecommendationService {
 
     private final WatchHistoryRepository watchHistoryRepository;
     private final UserGenreAffinityRepository affinityRepository;
     private final MediaRepository mediaRepository;
-    private RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String CACHE_KEY_PREFIX = "recommendations:";
     private static final long TTL_MINUTES = 30;
 
-    public List<MediaContent> getRecommendations(UUID userId) {
+    public List<RecommendationResponse> getRecommendations(UUID userId, int limit) {
+
+        if (limit <= 0) {
+            return Collections.emptyList();
+        }
 
         //check redis first
         String key = CACHE_KEY_PREFIX + userId;
-        List<MediaContent> cached = (List<MediaContent>) redisTemplate.opsForValue().get(key);
-        if (cached != null) return cached;
+        try {
+            Object cachedRaw = redisTemplate.opsForValue().get(key);
+            if (cachedRaw != null) {
+                List<MediaContent> cachedList;
+                if (cachedRaw instanceof String) {
+                    cachedList = objectMapper.readValue((String) cachedRaw, new TypeReference<List<MediaContent>>() {
+                    });
+                } else {
+                    cachedList = (List<MediaContent>) cachedRaw;
+                }
+                return cachedList.stream()
+                        .limit(limit)
+                        .map(RecommendationResponse::from)
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            log.error("Redis cache read error for user {}", userId, e);
+        }
 
         //cache miss - run algorithm
         List<MediaContent> results = computeRecommendations(userId);
 
-        //store in redis with TTL
-        redisTemplate.opsForValue().set(key, results, TTL_MINUTES, TimeUnit.MINUTES);
+        if (results != null && !results.isEmpty()) {
+            try {
+                String jsonString = objectMapper.writeValueAsString(results);
+                redisTemplate.opsForValue().set(key, jsonString,  TTL_MINUTES, TimeUnit.MINUTES);
+            } catch (Exception e) {
+                log.error("Failed to serialize recommendations to Redis for user {}", userId, e);
+            }
+        }
 
-        return results;
+        assert results != null;
+        return results.stream()
+                    .limit(limit)
+                    .map(RecommendationResponse::from)
+                    .toList();
+
     }
 
     private List<MediaContent> computeRecommendations(UUID userId) {
-
-        // 1. Get user's top genres (35% weight)
-        List<UserGenreAffinity> affinities = affinityRepository.findTopGenres(userId);
-
-        //2. Get watch history to avoid recommending already watched
-        List<WatchHistory> history = watchHistoryRepository.findByUserIdOrderByLastWatchedAtDesc(userId, Pageable.unpaged()).getContent();
-
-        Set<UUID> watchedIDs = history.stream()
-                .map(h -> h.getMedia().getId())
-                .collect(Collectors.toSet());
-
-        //3. Score all unwatched media
-        List<MediaContent> allMedia = mediaRepository.findAll();
-        return allMedia.stream()
-                .filter(m -> !watchedIDs.contains(m.getId()))
-                .map(m -> Map.entry(m, score(m, affinities)))
-                .sorted(Map.Entry.<MediaContent, Double>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
-                .limit(20)
-                .collect(Collectors.toList());
-
-    }
-
-    private double score(MediaContent media, List<UserGenreAffinity> affinities) {
-        double score = 0.0;
-
-        //Genre affinity - 35%
-        score += affinities.stream()
-                .filter(a -> a.getGenre().equals(media.getGenre()))
-                .mapToDouble(a -> a.getAffinityScore().doubleValue() * 0.35)
-                .sum();
-
-        //Average rating - 25%
-        score += media.getAvgRating().doubleValue() * 0.25;
-
-        //Recency - 20%
-        long daysSinceRelease = ChronoUnit.DAYS.between(
-                media.getReleaseDate(), LocalDate.now()
-        );
-
-        score += Math.min(0, (365 - daysSinceRelease) / 365.0) * 0.20;
-
-        //Total ratings (popularity) - 20%
-        score += Math.min(media.getTotalRatings() / 1000.0, 1.0) * 0.20;
-
-        return score;
+        List<MediaContent> recommendations = mediaRepository.getTopRecommendations(userId);
+        if (recommendations.isEmpty()) {
+            return mediaRepository.findTop20ByOrderByAvgRatingDesc();
+        }
+        return recommendations;
     }
 
     //Invalidate when user watches something
@@ -105,6 +92,12 @@ public class RecommendationService {
 
     //Invalidate for multiple users (new episode release)
     public void invalidateForUsers(List<UUID> userIds) {
-        userIds.forEach(this::invalidateForUser);
+        if (userIds == null || userIds.isEmpty()) return;
+
+        List<String> keys = userIds.stream()
+                .map(id -> CACHE_KEY_PREFIX + id)
+                .collect(Collectors.toList());
+
+        redisTemplate.delete(keys);
     }
 }

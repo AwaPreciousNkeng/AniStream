@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,22 @@ public interface MediaRepository extends JpaRepository<MediaContent, UUID> {
     List<MediaContent> searchByTitle(
             @Param("query") String query
     );
+
+    @Query(value = """
+        SELECT DISTINCT m.* FROM media_content m
+        INNER JOIN media_genres mg ON m.id = mg.media_id
+        INNER JOIN user_genre_affinity uga ON mg.genre = uga.genre_name
+        WHERE uga.user_id = :userId
+        AND m.id NOT IN (
+            SELECT wh.media_id FROM watch_history wh WHERE wh.user_id = :userId
+        )
+        ORDER BY (m.avg_rating * uga.weight) DESC
+        LIMIT 20
+        """, nativeQuery = true)
+    List<MediaContent> getTopRecommendations(@Param("userId") UUID userId);
+
+    // Spring Data fallback signature
+    List<MediaContent> findTop20ByOrderByAvgRatingDesc();
 
     Optional<MediaContent> findByAnilistId(Integer anilistId);
 

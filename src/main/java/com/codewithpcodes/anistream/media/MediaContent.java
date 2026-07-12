@@ -20,7 +20,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "media_content")
+@Table(
+        name = "media_content",
+        indexes = {
+                @Index(name = "idx_media_content_avg_rating", columnList = "avg_rating DESC"),
+                @Index(name = "idx_media_content_release_date", columnList = "releaseDate")
+        }
+)
 public class MediaContent {
 
     @Id
@@ -46,7 +52,10 @@ public class MediaContent {
     @ElementCollection
     @CollectionTable(
             name = "media_genres",
-            joinColumns = @JoinColumn(name = "media_id")
+            joinColumns = @JoinColumn(name = "media_id"),
+            indexes = {
+                    @Index(name = "idx_media_genres_lookup", columnList = "genre, media_id")
+            }
     )
     @Column(name = "genre")
     @Builder.Default
