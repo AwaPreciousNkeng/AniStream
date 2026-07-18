@@ -78,6 +78,13 @@ public class User implements UserDetails {
     @Column(name = "avatar_url", nullable = false)
     private String avatarUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private OAuthProvider oAuthProvider = OAuthProvider.NONE;
+
+    private String providerId;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Token> tokens;
 

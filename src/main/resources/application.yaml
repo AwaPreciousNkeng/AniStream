@@ -1,6 +1,14 @@
 spring:
   application:
     name: AniStream
+  websocket:
+    max-text-message-size: 65536
+    max-binary-message-size: 65536
+    messaging:
+      stomp:
+        heartbeat:
+          send-interval: 10000
+          receive-interval: 10000
   datasource:
     url: jdbc:postgresql://localhost:5432/aniStream_db
     username: pcodes
@@ -27,8 +35,6 @@ spring:
     type: redis
     redis:
       time-to-live: 600000
-  websocket:
-    allowed-origins: http://localhost:3000
   batch:
     job:
       enabled: false
@@ -74,18 +80,5 @@ application:
   ytdlp:
     binary-path: /usr/bin/yt-dlp
     download-dir: /tmp/animeStream/downloads
-  cache:
-    ttl:
-      home-feed: 600 #10 minutes
-      recommendations: 1800 #30 minutes
-      ranking-daily: 3600 #1 hour
-      ranking-weekly: 21600 #6 hours
-      ranking-monthly: 86400 #24 hours
-      user-search: 300 #5 minutes
-      presence: 300 #5 minutes
-  logging:
-    level:
-      root: INFO
-      com.codewithpcodes: DEBUG
-      org.springframework.security: INFO
-      org.hibernate: INFO
+  oauth2:
+    redirect-url: http://localhost:3000/oauth2/redirect
